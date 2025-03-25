@@ -1,0 +1,319 @@
+# Notification Services API
+#
+#
+# Description: This API includes the header API information, the Server information,
+#              the notification paths, the notification components such as parameters,
+#              responses, and schema's. This API also includes notifications and their
+#              properties.
+#
+# Purpose: This API allows the various website users to create notifications.
+#          It's also used by the TigerChow admin to manage notifications and its information.
+
+
+# ---------General API Information---------
+openapi: '3.0.0'
+info:
+  version: '1.0.0'
+  title: 'Notification Services API'
+  description: An Notification Service API for the TigerChow Software System
+
+# ---------API Server Information---------
+servers:
+  - url: https://www.TigerChow.com/api
+
+# ---------API Paths Information---------
+paths:
+
+  # Endpoint for sending validation error notifications (e.g., missing fields, duplicate email)
+  /notifications:
+    get:
+      description: Returns a list of all notifications and filter by specific parameters such as
+                   NotificationType...
+      parameters:
+        - $ref: '#/components/parameters/NotificationType'
+      # Responses to retrieving the notifications
+      responses:
+        '200':
+          description: Retrieved the list of all notificaions successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        '400':
+          description: Bad request due to missing or invalid fields
+        '409':
+          description: Conflict error (e.g., duplicate email already exists)
+
+    post:
+      description: Notify that a notificaion has been successfully created
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+      # Responses to posting the newly created notification
+      responses:
+        '201':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Account successfully created, notification sent.'
+        '400':
+          $ref: '#/components/responses/400Error'
+
+  # Endpoint for verifying user email via a token
+  /notifications/email-verify:
+    get:
+      description: Verify a user email using a provided verification token
+
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Email verification successful.'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '404':
+          description: Verification token not found or expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Email verification unsuccessful.'
+
+  # Endpoint for updating user preferences notifications
+  /notifications/account-preferences:
+    put:
+      description: Notify when a user's preferences are updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+              
+      responses:
+        '200':
+          description: User preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'User preferences updated successfully.'
+        '400':
+          $ref: '#/components/responses/400Error'
+
+        '500':
+          $ref: '#/components/responses/500Error'
+              
+
+
+  # Endpoint for sending password change notifications (Finished)
+  /notifications/password-change:
+    post:
+      description: Sends a notification to the user when their password has been successfully changed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+
+      responses:
+        '200':
+          description: Password change notification sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Password change notification sent successfully to the user.'
+        '400':
+          description: Invalid notification type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid notification type'
+
+        '404':
+          description: User with provided "userID" not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'User not found'
+
+        '500':
+          description: User did not receive notification due to internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Notification unable to be sent'
+
+
+# ---------API Components Information---------
+# Contains all reusable parameters, responses, and schemas for the Notifications API
+components:
+
+  # ---------Parameters---------
+  parameters:
+
+    # Helps set the limit of notifications on a single page
+    PageLimit:
+      name: limit
+      in: query
+      description: Limits the number of items on a page
+      schema:
+        type: integer
+
+    # Helps to select which page of notifications to be displayed
+    PageOffset:
+      name: offset
+      in: query
+      description: Specifies the page number of the notifications to be displayed
+      schema:
+        type: integer
+
+    # Helps to select what type of notificaions displayed
+    NotificationType:
+      name: type
+      in: query
+      description: Determines what kind of notification from severity or other factors
+      schema:
+        type: object
+
+    # Email Verification Token
+    EmailVerificationToken:
+      name: token
+      in: query
+      required: true
+      schema:
+        type: string
+
+
+  # ---------API Responses Information---------
+  responses:
+
+    # A schema for general 400 error code information
+    400Error:
+      description: Invalid Client Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                description: A human readable error message
+                type: string
+
+    # A schema for general 500 error code information
+    500Error:
+      description: Unexpected Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                description: A human readable error message
+                type: string
+
+  # ---------API Schemas Information---------
+  schemas:
+
+    # Schema for a notification
+    Notification:
+      type: object
+      required:
+        - userId
+        - message
+      properties:
+        userId:
+          type: string
+          description: The ID of the user receiving the notification
+        message:
+          type: string
+          description: Notification message
+        errorType:
+          type: string
+          description: The type of error (optional, for error notifications)
+        userPreferences:
+          $ref: '#/components/schemas/userPreferences' 
+
+    # User Preferences schema to be re-used throughout the API
+    userPreferences:
+      description: represents the preferences that a user may have
+      type: object
+      required:
+        - language
+      properties:
+        language:
+          type: string
+        emailList:
+          type: boolean
+
+    # User account schema to be re-used throughout the API
+    account:
+      description: A single user account for the TigerChow application
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        # Unique ID for a given user
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        active:
+          type: boolean
+          default: true 
+        # User Preferences of the user
+        preferences:
+          $ref: "#/components/schemas/userPreferences"
+
+  # ---------API SecuritySchemes Information NOT NEEDED FOR 3720---------
+  #securitySchemes:
+  #  ApiKey:
+  #    type: apiKey
+  #    in: header
+  #    name: X-Api-Key
+
+# ---------API Security Information  NOT NEEDED FOR 3720---------
+#security:
+#  - ApiKey: []

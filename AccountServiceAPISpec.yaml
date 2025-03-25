@@ -563,6 +563,14 @@ components:
           type: string
         location:
           type: string
+        userType:
+          type: string
+          enum: 
+            - customer
+            - business_user
+            - admin
+            - customer_service_rep
+
         # User Preferences of the user
         preferences:
           $ref: "#/components/schemas/userPreferences"
